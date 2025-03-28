@@ -50,8 +50,8 @@ import {
   LAMPORTS_PER_SOL,
   Transaction,
   SystemProgram,
-  VersionedTransaction,
 } from "@solana/web3.js";
+import type { VersionedTransaction } from "@solana/web3.js";
 
 export default function CreateBackroomPage() {
   const { publicKey } = useUser();

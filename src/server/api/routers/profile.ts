@@ -16,9 +16,9 @@ const profileSchema = z
   })
   .transform((data) => ({
     ...data,
-    website: data.website || null,
-    github: data.github || null,
-    linkedin: data.linkedin || null,
+    website: data.website ?? null,
+    github: data.github ?? null,
+    linkedin: data.linkedin ?? null,
   }));
 
 type Profile = {
@@ -35,30 +35,30 @@ async function getUserAgents(publicKey: string): Promise<Agent[]> {
   const { objects } = await storage.listObjectsPaginated("agents/", 100);
   if (!objects) return [];
 
-  const agents: Agent[] = [];
+  const agentMap = new Map<string, Agent>();
   for (const obj of objects) {
     try {
       const agent = await storage.getObject<Agent>(obj.key);
       if (agent.creator === publicKey) {
-        agents.push(agent);
+        agentMap.set(agent.id, agent);
       }
     } catch (error) {
       console.error(`Failed to fetch agent ${obj.key}:`, error);
     }
   }
-  return agents;
+  return Array.from(agentMap.values());
 }
 
 async function getUserBackrooms(publicKey: string): Promise<Backroom[]> {
   const { objects } = await storage.listObjectsPaginated("backrooms/", 100);
   if (!objects) return [];
 
-  const backrooms: Backroom[] = [];
+  const backroomMap = new Map<string, Backroom>();
   for (const obj of objects) {
     try {
       const backroom = await storage.getObject<Backroom>(obj.key);
       if (backroom.creator === publicKey) {
-        backrooms.push({
+        backroomMap.set(backroom.id, {
           ...backroom,
           agents: backroom.agents ?? [],
           visibility: backroom.visibility ?? "private",
@@ -73,7 +73,7 @@ async function getUserBackrooms(publicKey: string): Promise<Backroom[]> {
       console.error(`Failed to fetch backroom ${obj.key}:`, error);
     }
   }
-  return backrooms;
+  return Array.from(backroomMap.values());
 }
 
 export const profileRouter = createTRPCRouter({

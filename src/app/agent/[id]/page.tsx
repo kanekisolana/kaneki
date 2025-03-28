@@ -56,6 +56,10 @@ export default function AgentPage() {
     { enabled: !!agentId },
   );
 
+  const { data: profile } = api.profile.get.useQuery(undefined, {
+    enabled: !!publicKey,
+  });
+
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
@@ -358,7 +362,7 @@ export default function AgentPage() {
                           <div className="flex items-center gap-2">
                             <span className="font-medium">
                               {message.messageType === "user"
-                                ? "You"
+                                ? (profile?.username ?? "You")
                                 : agent.name}
                             </span>
                             {message.messageType === "agent" && (

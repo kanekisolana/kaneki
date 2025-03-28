@@ -31,8 +31,8 @@ import {
   Transaction,
   SystemProgram,
   LAMPORTS_PER_SOL,
-  VersionedTransaction,
 } from "@solana/web3.js";
+import type { VersionedTransaction } from "@solana/web3.js";
 
 interface SolanaWallet {
   signTransaction(transaction: Transaction): Promise<Transaction>;

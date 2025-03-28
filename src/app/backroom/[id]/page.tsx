@@ -29,12 +29,8 @@ import {
 import { api } from "@/trpc/react";
 import { useParams } from "next/navigation";
 import type { Agent } from "@/types/agent";
-import {
-  Connection,
-  VersionedTransaction,
-  Keypair,
-  Transaction,
-} from "@solana/web3.js";
+import { Connection, VersionedTransaction, Keypair } from "@solana/web3.js";
+import type { Transaction } from "@solana/web3.js";
 
 declare global {
   interface Window {

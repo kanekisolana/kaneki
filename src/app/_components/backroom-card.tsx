@@ -72,7 +72,7 @@ export function BackroomCard({
     <Card className="flex h-[320px] flex-col overflow-hidden transition-all hover:shadow-lg">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
-          <CardTitle className="line-clamp-1 text-xl">{name}</CardTitle>
+          <CardTitle className="text-md text-pretty">{name}</CardTitle>
           <div className="flex flex-col items-end justify-end gap-1">
             <Badge
               variant="outline"

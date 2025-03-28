@@ -73,7 +73,7 @@ export default function ProfilePage() {
         description: "Profile updated successfully",
       });
       setIsEditOpen(false);
-      refetch();
+      void refetch();
     },
     onError: (error) => {
       toast({
@@ -155,7 +155,9 @@ export default function ProfilePage() {
                       size="icon"
                       className="h-8 w-8"
                       onClick={() => {
-                        navigator.clipboard.writeText(profile.walletAddress);
+                        void navigator.clipboard.writeText(
+                          profile.walletAddress,
+                        );
                         toast({
                           title: "Success",
                           description: "Wallet address copied!",
@@ -439,10 +441,6 @@ export default function ProfilePage() {
             </TabsList>
 
             <TabsContent value="agents" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Your Agents</h2>
-                <Button>Create New Agent</Button>
-              </div>
               {profile.agents.length === 0 ? (
                 <Card>
                   <CardHeader>
@@ -471,10 +469,6 @@ export default function ProfilePage() {
             </TabsContent>
 
             <TabsContent value="backrooms" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Your Backrooms</h2>
-                <Button>Create New Backroom</Button>
-              </div>
               {profile.backrooms.length === 0 ? (
                 <Card>
                   <CardHeader>

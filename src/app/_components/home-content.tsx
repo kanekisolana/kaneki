@@ -135,7 +135,6 @@ export function HomeContent() {
                     description={agent.description}
                     creator={agent.creator}
                     likes={agent.likes ?? 0}
-                    uses={agent.uses ?? 0}
                     fee={agent.price ?? 0}
                     isPublic={agent.visibility === "public"}
                     interactions={agent.interactions ?? 0}

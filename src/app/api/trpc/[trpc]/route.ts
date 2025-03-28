@@ -10,22 +10,8 @@ import { createTRPCContext } from "@/server/api/trpc";
  * handling a HTTP request (e.g. when you make requests from Client Components).
  */
 const createContext = async (req: NextRequest) => {
-  // Get the public key from the request headers
-  const publicKey = req.headers.get("x-public-key");
-
   return createTRPCContext({
     headers: req.headers,
-    session: publicKey
-      ? {
-          user: {
-            publicKey,
-          },
-        }
-      : {
-          user: {
-            publicKey: "",
-          },
-        },
   });
 };
 
