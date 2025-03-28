@@ -101,7 +101,6 @@ export const profileRouter = createTRPCRouter({
         `profiles/${ctx.session.user.publicKey}.json`,
       );
 
-      // Fetch user's agents and backrooms
       const [userAgents, userBackrooms] = await Promise.all([
         getUserAgents(ctx.session.user.publicKey),
         getUserBackrooms(ctx.session.user.publicKey),
@@ -118,7 +117,6 @@ export const profileRouter = createTRPCRouter({
         backrooms: userBackrooms,
       };
     } catch (error) {
-      // If profile not found, return default profile
       if (
         error instanceof Error &&
         error.message.includes("Object not found")
@@ -169,7 +167,6 @@ export const profileRouter = createTRPCRouter({
           profile,
         );
 
-        // Fetch user's agents and backrooms for the response
         const [userAgents, userBackrooms] = await Promise.all([
           getUserAgents(ctx.session.user.publicKey),
           getUserBackrooms(ctx.session.user.publicKey),
@@ -184,7 +181,6 @@ export const profileRouter = createTRPCRouter({
           backroomsCreated: userBackrooms.length,
         };
       } catch (error) {
-        // If profile not found, create new profile
         if (
           error instanceof Error &&
           error.message.includes("Object not found")

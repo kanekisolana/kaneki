@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { env } from "@/env";
 
-const PUMPFUN_API_KEY =
-  "94r6gy28en1pmwa765456av4cx24ehhh6xd5ew32d145cjhq8rr4wxvta4t6ye9jchwmrgjmadhpmt1ten2pwxa669h3ejufdtr38w3af8upeu2pctpmmxkuet37aka3ddt7mx23cwykuarwn0j3bat32yvjbad15mghn6r6d67cku25xrpwy26ctd74hv589a3egapdn8kuf8";
+const PUMPFUN_API_KEY = env.PUMPFUN_API_KEY;
 
 interface TradeLocalBody {
   action: string;
@@ -23,11 +23,9 @@ interface ErrorResponse {
 
 export async function POST(req: NextRequest) {
   try {
-    // Get the JSON body from the incoming request
     const body = (await req.json()) as TradeLocalBody;
 
     try {
-      // Forward the request to pumpportal.fun API
       const response = await fetch("https://pumpportal.fun/api/trade-local", {
         method: "POST",
         headers: {
@@ -38,12 +36,10 @@ export async function POST(req: NextRequest) {
       });
 
       if (!response.ok) {
-        // Try to get more details about the error
         try {
           const errorText = await response.text();
 
           try {
-            // Try to parse as JSON
             const errorJson = JSON.parse(errorText) as Record<string, unknown>;
             return NextResponse.json(
               {
@@ -53,7 +49,6 @@ export async function POST(req: NextRequest) {
               { status: response.status },
             );
           } catch {
-            // If not JSON, return as text
             return NextResponse.json(
               {
                 error: errorText,
@@ -63,7 +58,6 @@ export async function POST(req: NextRequest) {
             );
           }
         } catch {
-          // If we can't even get the error text
           return NextResponse.json(
             {
               error: `Pump.fun API error: ${response.status} ${response.statusText}`,
@@ -73,7 +67,6 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Return the binary response as-is (important for transaction data)
       const arrayBuffer = await response.arrayBuffer();
       return new NextResponse(arrayBuffer, {
         status: 200,

@@ -56,7 +56,6 @@ const checkTransactionSignatureUsed = async (
   purpose: string,
 ): Promise<boolean> => {
   try {
-    // Check the signatures directory for this transaction
     const signaturesKey = `payments/signatures/${signature}.json`;
     try {
       const verification =
@@ -64,12 +63,10 @@ const checkTransactionSignatureUsed = async (
           signaturesKey,
         );
 
-      // If found, check if it was used for a different purpose
       if (verification && verification.purpose !== purpose) {
-        return true; // Signature already used for a different purpose
+        return true;
       }
 
-      // If found with the same purpose, it's a duplicate request but not a replay attack
       return false;
     } catch (error) {
       const storageError = error as StorageError;
@@ -77,19 +74,15 @@ const checkTransactionSignatureUsed = async (
         storageError.$metadata?.httpStatusCode === 404 ||
         storageError.Code === "NoSuchKey"
       ) {
-        // Signature not found, which is good
         return false;
       }
       throw error;
     }
   } catch (error) {
-    // In case of error, we'll assume it's not used to avoid blocking legitimate payments
-    // But we log the error for monitoring
     return false;
   }
 };
 
-// Fix the recordTransactionSignatureUsage function to be consistent with saveWithRetry
 const recordTransactionSignatureUsage = async (
   signature: string,
   payerPublicKey: string,
@@ -104,7 +97,6 @@ const recordTransactionSignatureUsage = async (
       purpose,
     };
 
-    // Use the same retry pattern as saveWithRetry
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         await storage.saveObject(signaturesKey.toLowerCase(), verification);
@@ -114,9 +106,7 @@ const recordTransactionSignatureUsage = async (
         await delay(RETRY_DELAY);
       }
     }
-  } catch (error) {
-    // Log error but don't fail the verification process
-  }
+  } catch (error) {}
 };
 
 export const paymentRouter = createTRPCRouter({
@@ -125,24 +115,21 @@ export const paymentRouter = createTRPCRouter({
       z.object({
         signature: z.string(),
         payerPublicKey: z.string(),
-        recipient: z.string().optional(), // for paid agent payments
-        agentId: z.string().optional(), // for paid agent payments
+        recipient: z.string().optional(),
+        agentId: z.string().optional(),
       }),
     )
     .mutation(async ({ input }) => {
-      // Determine the purpose of this payment
       const purpose = input.agentId
         ? `paid-agent-${input.agentId}`
         : "agent-creation";
 
-      // First record the transaction signature usage to prevent replay attacks
       await recordTransactionSignatureUsage(
         input.signature,
         input.payerPublicKey,
         purpose,
       );
 
-      // Then check if this transaction signature has been used before for a different purpose
       const isReplay = await checkTransactionSignatureUsed(
         input.signature,
         purpose,
@@ -162,7 +149,6 @@ export const paymentRouter = createTRPCRouter({
         },
       );
 
-      // Try to get transaction with retries
       let transaction = null;
       let lastError = null;
 
@@ -197,23 +183,19 @@ export const paymentRouter = createTRPCRouter({
         });
       }
 
-      // Verify SOL transfer
       try {
         const recipientPubkey = new PublicKey(
           input.recipient ?? RECIPIENT_ADDRESS,
         );
         const payerPubkey = new PublicKey(input.payerPublicKey);
 
-        // Verify SOL transfer
         let transferFound = false;
         let transferredLamports = 0;
         const requiredLamports = Math.round(
           REQUIRED_PAYMENT_AMOUNT * 1_000_000_000,
-        ); // Convert SOL to lamports
+        );
 
-        // Check for native SOL transfers in the transaction
         if (transaction.meta && transaction.transaction.message) {
-          // Access instructions properly based on whether it's a legacy or versioned transaction
           const instructions =
             "instructions" in transaction.transaction.message
               ? transaction.transaction.message.instructions
@@ -223,7 +205,6 @@ export const paymentRouter = createTRPCRouter({
                 : [];
 
           for (const ix of instructions) {
-            // Check if this is a system program transfer
             let programId = "";
             if ("programId" in ix && ix.programId) {
               if (ix.programId instanceof PublicKey) {
@@ -241,7 +222,6 @@ export const paymentRouter = createTRPCRouter({
                 ].toString();
             }
 
-            // Check if it's a System Program transfer instruction
             const isSystemProgramTransfer =
               programId === "11111111111111111111111111111111";
             const isTransferInstruction =
@@ -256,7 +236,6 @@ export const paymentRouter = createTRPCRouter({
                 ix.data[0] === 2);
 
             if (isSystemProgramTransfer && isTransferInstruction) {
-              // Get accounts involved in the transfer
               const accounts =
                 "accountKeys" in transaction.transaction.message
                   ? transaction.transaction.message.accountKeys
@@ -284,12 +263,10 @@ export const paymentRouter = createTRPCRouter({
               const fromAccount = accounts[fromIndex];
               const toAccount = accounts[toIndex];
 
-              // Verify both recipient and payer
               if (
                 toAccount.toString() === recipientPubkey.toString() &&
                 fromAccount.toString() === payerPubkey.toString()
               ) {
-                // Extract the amount from the transaction data if possible
                 if ("data" in ix && ix.data) {
                   try {
                     let amount: bigint;
@@ -312,9 +289,7 @@ export const paymentRouter = createTRPCRouter({
           }
         }
 
-        // Also check the post balances for the recipient and validate against the payer
         if (transaction.meta?.postBalances && transaction.meta?.preBalances) {
-          // Get account keys correctly based on transaction version
           const accountKeys =
             "accountKeys" in transaction.transaction.message
               ? transaction.transaction.message.accountKeys
@@ -323,7 +298,6 @@ export const paymentRouter = createTRPCRouter({
           let recipientIndex = -1;
           let payerIndex = -1;
 
-          // Find both the recipient and payer indexes
           for (let i = 0; i < accountKeys.length; i++) {
             const accountKey = accountKeys[i].toString();
             if (accountKey === recipientPubkey.toString()) {
@@ -334,7 +308,6 @@ export const paymentRouter = createTRPCRouter({
             }
           }
 
-          // Validate both indexes were found
           if (recipientIndex >= 0 && payerIndex >= 0) {
             const recipientPreLamports =
               transaction.meta.preBalances[recipientIndex];
@@ -343,7 +316,6 @@ export const paymentRouter = createTRPCRouter({
             const payerPreLamports = transaction.meta.preBalances[payerIndex];
             const payerPostLamports = transaction.meta.postBalances[payerIndex];
 
-            // Calculate transferred amount (accounting for fees)
             const recipientIncrease =
               recipientPostLamports - recipientPreLamports;
             const payerDecrease = payerPreLamports - payerPostLamports;
@@ -358,7 +330,6 @@ export const paymentRouter = createTRPCRouter({
           }
         }
 
-        // Verify the transaction contained a valid transfer with sufficient amount
         if (!transferFound) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -366,7 +337,6 @@ export const paymentRouter = createTRPCRouter({
           });
         }
 
-        // Verify the transferred amount meets the requirement
         if (transferredLamports < requiredLamports) {
           throw new TRPCError({
             code: "BAD_REQUEST",
@@ -382,7 +352,6 @@ export const paymentRouter = createTRPCRouter({
         });
       }
 
-      // Store verification
       const verificationKey = `payments/agent-creation/${input.payerPublicKey.toLowerCase()}.json`;
       const verification: PaymentVerification = {
         signature: input.signature,
@@ -392,7 +361,6 @@ export const paymentRouter = createTRPCRouter({
       };
 
       try {
-        // Use the retry logic for saving to storage
         await saveWithRetry(verificationKey, verification);
       } catch (storageError) {}
 
@@ -417,13 +385,11 @@ export const paymentRouter = createTRPCRouter({
             storageError.$metadata?.httpStatusCode === 404 ||
             storageError.Code === "NoSuchKey"
           ) {
-            // This is expected for new users, return unverified without logging
             return { verified: false, signature: null };
           }
-          throw error; // Re-throw unexpected errors
+          throw error;
         }
       } catch (error) {
-        // Only log non-404 errors
         const storageError = error as StorageError;
         if (storageError.$metadata?.httpStatusCode !== 404) {
         }
@@ -431,7 +397,6 @@ export const paymentRouter = createTRPCRouter({
       }
     }),
 
-  // Add a new procedure to check if a user has paid for an agent
   checkAgentPayment: publicProcedure
     .input(
       z.object({
@@ -455,13 +420,11 @@ export const paymentRouter = createTRPCRouter({
             storageError.$metadata?.httpStatusCode === 404 ||
             storageError.Code === "NoSuchKey"
           ) {
-            // This is expected for new users, return unpaid without logging
             return { paid: false, signature: null };
           }
-          throw error; // Re-throw unexpected errors
+          throw error;
         }
       } catch (error) {
-        // Only log non-404 errors
         const storageError = error as StorageError;
         if (storageError.$metadata?.httpStatusCode !== 404) {
         }

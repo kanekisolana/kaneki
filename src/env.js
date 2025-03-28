@@ -16,6 +16,7 @@ export const env = createEnv({
     CLOUDFLARE_BUCKET_NAME: z.string(),
     TOGETHER_API: z.string(),
     OPENAI_API_KEY: z.string(),
+    PUMPFUN_API_KEY: z.string(),
   },
 
   /**
@@ -39,6 +40,7 @@ export const env = createEnv({
     CLOUDFLARE_BUCKET_NAME: process.env.CLOUDFLARE_BUCKET_NAME,
     TOGETHER_API: process.env.TOGETHER_API,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    PUMPFUN_API_KEY: process.env.PUMPFUN_API_KEY,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

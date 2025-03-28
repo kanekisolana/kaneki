@@ -106,7 +106,6 @@ class StorageService {
             throw new Error(`Object not found: ${key}`);
           }
 
-          // Parse JSON with explicit validation
           let parsed: unknown;
           try {
             parsed = JSON.parse(data);
@@ -116,7 +115,6 @@ class StorageService {
 
           return parsed as T;
         } catch (err) {
-          // Check specifically for NoSuchKey
           if (
             err &&
             typeof err === "object" &&
@@ -126,7 +124,6 @@ class StorageService {
             throw new Error(`Object not found: ${key}`);
           }
 
-          // Capture internal errors for retry
           if (
             err &&
             typeof err === "object" &&
@@ -135,7 +132,6 @@ class StorageService {
           ) {
             lastError = err;
 
-            // Wait before retry
             if (attempt < retryCount - 1) {
               await new Promise((resolve) =>
                 setTimeout(resolve, retryDelay * (attempt + 1)),
@@ -149,7 +145,6 @@ class StorageService {
       } catch (error) {
         lastError = error;
 
-        // If this is not our last attempt, and it's an error we want to retry on
         if (
           attempt < retryCount - 1 &&
           error &&
@@ -164,14 +159,12 @@ class StorageService {
           continue;
         }
 
-        // On last attempt, throw the error
         if (attempt === retryCount - 1) {
           throw error;
         }
       }
     }
 
-    // This should never be reached, but just in case
     throw lastError;
   }
 
@@ -349,7 +342,6 @@ export const r2Router = createTRPCRouter({
         let allBackrooms: Backroom[] = [];
         let nextCursor = input.cursor;
 
-        // Fetch all pages of results
         do {
           const result = await storage.listObjectsPaginated(
             "backrooms/",
@@ -375,7 +367,6 @@ export const r2Router = createTRPCRouter({
           nextCursor = result.nextCursor;
         } while (nextCursor);
 
-        // Apply filters to all backrooms
         let filteredBackrooms = allBackrooms.filter((b) => {
           const matchesSearch = input.search
             ? b.name.toLowerCase().includes(input.search.toLowerCase()) ||
@@ -436,7 +427,6 @@ export const r2Router = createTRPCRouter({
           );
         }
 
-        // Apply sorting
         switch (input.sortBy) {
           case "oldest":
             filteredBackrooms.sort(
@@ -581,7 +571,6 @@ export const r2Router = createTRPCRouter({
         let allAgents: Agent[] = [];
         let nextCursor = input.cursor;
 
-        // Fetch all pages of results
         do {
           const result = await storage.listObjectsPaginated(
             "agents/",
@@ -644,7 +633,6 @@ export const r2Router = createTRPCRouter({
           nextCursor = result.nextCursor;
         } while (nextCursor);
 
-        // Apply filters to all agents
         const filteredAgents = allAgents.filter((agent) => {
           const matchesSearch = input.search
             ? agent.name.toLowerCase().includes(input.search.toLowerCase()) ||
@@ -676,7 +664,6 @@ export const r2Router = createTRPCRouter({
           return matchesSearch && matchesPrice && matchesVisibility;
         });
 
-        // Apply sorting
         switch (input.sortBy) {
           case "oldest":
             filteredAgents.sort(
@@ -692,7 +679,7 @@ export const r2Router = createTRPCRouter({
           case "popular":
             filteredAgents.sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0));
             break;
-          default: // newest
+          default:
             filteredAgents.sort(
               (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
             );
@@ -857,12 +844,10 @@ export const r2Router = createTRPCRouter({
     )
     .mutation(async ({ input }) => {
       try {
-        // Get the agent
         const agent = await storage.getObject<Agent>(
           `agents/${input.agentId}.json`,
         );
 
-        // Get the likes data
         let likes: string[] = [];
         try {
           const data = await storage.getObject<string[]>(
@@ -871,11 +856,8 @@ export const r2Router = createTRPCRouter({
           if (data && Array.isArray(data)) {
             likes = data;
           }
-        } catch (error) {
-          // If the file doesn't exist, that's fine - we'll use an empty array
-        }
+        } catch (error) {}
 
-        // Toggle like
         const userIndex = likes.indexOf(input.userId);
         if (userIndex === -1) {
           likes.push(input.userId);
@@ -883,19 +865,15 @@ export const r2Router = createTRPCRouter({
           likes.splice(userIndex, 1);
         }
 
-        // Save updated likes
         await storage.saveObject(`agents/${input.agentId}/likes.json`, likes);
 
-        // Update agent with new likes count
         const updatedAgent: Agent = {
           ...agent,
           likes: likes.length,
         };
 
-        // Save the updated agent
         await storage.saveObject(`agents/${input.agentId}.json`, updatedAgent);
 
-        // Return the updated state
         return {
           success: true,
           liked: userIndex === -1,
@@ -919,7 +897,6 @@ export const r2Router = createTRPCRouter({
     )
     .query(async ({ input }) => {
       try {
-        // Get the likes data
         let likes: string[] = [];
         try {
           const data = await storage.getObject<string[]>(
@@ -928,16 +905,13 @@ export const r2Router = createTRPCRouter({
           if (data && Array.isArray(data)) {
             likes = data;
           }
-        } catch (error) {
-          // If the file doesn't exist, that's fine - we'll use an empty array
-        }
+        } catch (error) {}
 
         return {
           liked: likes.includes(input.userId),
           likeCount: likes.length,
         };
       } catch (error) {
-        // Return default values instead of throwing an error
         return {
           liked: false,
           likeCount: 0,

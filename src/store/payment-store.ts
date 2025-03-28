@@ -55,7 +55,6 @@ export const usePaymentStore = create<PaymentState>()(
           const data = JSON.parse(str) as SerializedStorageValue;
           if (!data.state?.verifiedTransactions) return null;
 
-          // Convert stored array back to Map and restore Date objects
           const entries = data.state.verifiedTransactions;
           const map = new Map(
             entries.map(([key, txs]) => [
@@ -74,7 +73,6 @@ export const usePaymentStore = create<PaymentState>()(
           };
         },
         setItem: (name, value: StorageValue): void => {
-          // Convert Map to array before storing
           const data: SerializedStorageValue = {
             state: {
               verifiedTransactions: Array.from(
