@@ -9,9 +9,7 @@ A modern web application built with Next.js, TypeScript, and Tailwind CSS that p
 - 👤 User Profiles
 - 💰 Token Feed Integration
 - 🔒 Secure Authentication
-- 🎨 Modern UI with Tailwind CSS
-- 🌙 Dark/Light Mode Support
-- 📱 Responsive Design
+- 🎨 Modern UI with Tailwind CSS & Shadcn
 
 ## Tech Stack
 
@@ -29,14 +27,14 @@ A modern web application built with Next.js, TypeScript, and Tailwind CSS that p
 
 - Node.js (Latest LTS version recommended)
 - pnpm (v9.15.2 or later)
-- Solana Wallet (for authentication)
+- Unified Wallet Kit (for authentication)
 
 ## Getting Started
 
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/kaneki.git
+   git clone https://github.com/kanekisolana/kaneki.git
    cd kaneki
    ```
 
@@ -105,6 +103,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
-- [Radix UI](https://www.radix-ui.com/)
 - [tRPC](https://trpc.io/)
 - [Solana](https://solana.com/)
