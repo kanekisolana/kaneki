@@ -1,5 +1,6 @@
 import { Button } from "@/app/_components/ui/button";
 import Link from "next/link";
+import { TokenInfo } from "./token-info";
 
 export function HeroSection() {
   return (
@@ -27,6 +28,8 @@ export function HeroSection() {
               <Link href="/create-backroom">Create a Backroom</Link>
             </Button>
           </div>
+
+          <TokenInfo />
 
           <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
             <div className="rounded-lg bg-card p-6 shadow-lg">
